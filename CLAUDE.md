@@ -9,6 +9,10 @@ The store is a supporting tool for the AIEOS sherpa and generation prompts. It i
 ## How to Develop
 
 ```bash
+# Create and activate virtual environment (one-time setup)
+python3 -m venv .venv
+source .venv/bin/activate
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -24,6 +28,8 @@ bash scripts/ingest-initiative.sh ../aieos-console
 # Check store statistics
 bash scripts/stats.sh
 ```
+
+Always activate the venv before running commands: `source .venv/bin/activate`
 
 ## Key Files
 
