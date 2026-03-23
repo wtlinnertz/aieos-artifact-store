@@ -16,8 +16,8 @@ source .venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run unit tests (no embedding model needed)
-pytest tests/ -v --ignore=tests/test_ingest.py
+# Run unit tests only (no embedding model needed — slow tests auto-skipped)
+pytest tests/ -v
 
 # Run all tests including integration (downloads model on first run)
 pytest tests/ -v --run-slow
@@ -43,8 +43,8 @@ Always activate the venv before running commands: `source .venv/bin/activate`
 
 ## Testing
 
-- **Unit tests:** `pytest tests/ -v --ignore=tests/test_ingest.py` — tests chunker and metadata extraction without needing the embedding model.
-- **Integration tests:** `pytest tests/ -v --run-slow` — requires the embedding model to be downloaded. Tests full ingest-and-query cycle.
+- **Unit tests:** `pytest tests/ -v` — tests chunker and metadata extraction. Slow tests (embedding/ingest) are auto-skipped.
+- **All tests:** `pytest tests/ -v --run-slow` — includes integration tests. Downloads the embedding model on first run. Tests full ingest-and-query cycle.
 
 ## Important Notes
 
