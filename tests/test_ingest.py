@@ -18,7 +18,7 @@ class TestIngestArtifact:
     def test_ingests_frozen_artifact(self, sample_artifact, tmp_path):
         # Write sample to temp file
         artifact_file = tmp_path / "04-sad.md"
-        artifact_file.write_text(sample_artifact)
+        artifact_file.write_text(sample_artifact, encoding="utf-8")
 
         # Override store path
         import src.config as config
@@ -36,7 +36,7 @@ class TestIngestArtifact:
 
     def test_skips_draft_artifact(self, sample_draft_artifact, tmp_path):
         artifact_file = tmp_path / "03-pfd.md"
-        artifact_file.write_text(sample_draft_artifact)
+        artifact_file.write_text(sample_draft_artifact, encoding="utf-8")
 
         import src.config as config
         original_path = config.STORE_PATH
@@ -56,7 +56,7 @@ class TestIngestAndQuery:
     def test_end_to_end(self, sample_artifact, tmp_path):
         """Ingest an artifact and query it."""
         artifact_file = tmp_path / "04-sad.md"
-        artifact_file.write_text(sample_artifact)
+        artifact_file.write_text(sample_artifact, encoding="utf-8")
 
         import src.config as config
         original_path = config.STORE_PATH
