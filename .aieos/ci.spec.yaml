@@ -1,0 +1,81 @@
+spec_version: "1.0.0"
+code_repo: "wtlinnertz/aieos-artifact-store"
+
+actions:
+  - action: test.unit
+    criteria:
+      expect_all_pass: true
+      min_coverage: 60   # lowered from the template's 80 — pilot is pre-coverage-targeted
+
+  - action: test.integration
+    criteria:
+      expect_all_pass: true
+
+  - action: security.sast
+    criteria:
+      max_severity: high
+
+  - action: security.sca
+    criteria:
+      max_severity: high
+      max_cvss: 7.0
+
+  - action: security.secret-scan
+    criteria:
+      expect_zero_findings: true
+
+  - action: build.artifact
+    criteria: {}
+    depends_on:
+      - test.unit
+      - test.integration
+
+  - action: sbom.generate
+    criteria: {}
+    depends_on:
+      - build.artifact
+
+  - action: security.container-scan
+    criteria:
+      max_severity: high
+    depends_on:
+      - build.artifact
+
+  - action: sign.artifact
+    criteria: {}
+    depends_on:
+      - build.artifact
+      - security.sast
+      - security.sca
+      - security.secret-scan
+      - security.container-scan
+      - sbom.generate
+
+  - action: sign.attestation
+    criteria: {}
+    depends_on:
+      - sbom.generate
+      - sign.artifact
+
+  - action: publish.artifact
+    criteria: {}
+    depends_on:
+      - sign.artifact
+      - sign.attestation
+
+policies:
+  timeout_seconds: 1800
+  retry:
+    max_retries: 1
+    backoff: exponential
+  adapter_preferences:
+    test.unit: adapter-pytest-unit
+    test.integration: adapter-pytest-integration
+    security.sast: adapter-semgrep-sast
+    security.sca: adapter-osv-sca
+    security.secret-scan: adapter-semgrep-sast
+    security.container-scan: adapter-trivy-container
+    sbom.generate: adapter-syft-sbom
+    build.artifact: adapter-buildah-image
+    sign.artifact: adapter-cosign-sign
+    sign.attestation: adapter-cosign-sign

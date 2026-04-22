@@ -1,0 +1,84 @@
+spec_version: "1.0.0"
+# Placeholder digest — M6.4 CI will emit the real one via publish.artifact,
+# and the CD authoring flow re-freezes the CD spec with the produced digest.
+artifact_ref: "ghcr.io/wtlinnertz/aieos-artifact-store@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+
+environments:
+  - name: dev
+    lifetime: persistent
+    actions:
+      - action: deploy.environment
+        criteria:
+          reconciled_within_seconds: 300
+      - action: verify.smoke
+        criteria:
+          expected_status: 200
+        depends_on:
+          - deploy.environment
+
+  - name: staging
+    lifetime: persistent
+    actions:
+      - action: deploy.environment
+        criteria:
+          reconciled_within_seconds: 300
+      - action: verify.smoke
+        criteria:
+          expected_status: 200
+        depends_on:
+          - deploy.environment
+
+  - name: prod
+    lifetime: persistent
+    actions:
+      - action: deploy.environment
+        criteria:
+          reconciled_within_seconds: 600
+      - action: verify.smoke
+        criteria:
+          expected_status: 200
+        depends_on:
+          - deploy.environment
+      - action: verify.health
+        criteria:
+          all_endpoints_healthy: true
+        depends_on:
+          - deploy.environment
+      - action: verify.slo
+        criteria:
+          min_success_rate: 0.99
+          window_seconds: 600
+        depends_on:
+          - deploy.environment
+
+promotions:
+  - from: dev
+    to: staging
+    type: auto-promote
+    bake_duration: null
+    verification_interval: null
+    rollback_on_degradation: null
+  - from: staging
+    to: prod
+    type: manual-gate-required
+    bake_duration: null
+    verification_interval: null
+    rollback_on_degradation: null
+
+rollback_conditions:
+  trigger_on:
+    - verify.smoke FAIL
+    - verify.health FAIL
+    - verify.slo FAIL
+  rollback_to: previous_known_good
+
+policies:
+  timeout_seconds: 3600
+  retry:
+    max_retries: 0
+    backoff: none
+  adapter_preferences:
+    deploy.environment: adapter-flux-handoff
+    verify.smoke: adapter-http-smoke
+    verify.health: adapter-http-health
+    verify.slo: adapter-prom-slo

@@ -1,0 +1,13 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: aieos-artifact-store-manifests
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/wtlinnertz/aieos-manifests
+  ref:
+    branch: main
+  # Flux watches the manifests repo — the adapter-flux-handoff commits
+  # envs/<env>/ref.txt and the per-env Kustomization resolves against
+  # this source.

@@ -1,0 +1,47 @@
+name: aieos-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  id-token: write   # enables cosign keyless OIDC signing in adapter CI
+
+jobs:
+  spec-driven-ci:
+    runs-on: ubuntu-latest
+    steps:
+      # actions/checkout v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      # actions/setup-python v6.2.0
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: "3.11"
+
+      - name: Install pipeline runner
+        run: |
+          python -m pip install --upgrade pip
+          pip install git+https://github.com/wtlinnertz/aieos-pipeline-runner.git@main
+
+      - name: Compute spec hash
+        id: spec
+        run: |
+          SHA=$(python -c "import hashlib,pathlib; print(hashlib.sha256(pathlib.Path('.aieos/ci.spec.yaml').read_bytes()).hexdigest())")
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+      # v1 runs the pipeline against mock adapters. Real-adapter wiring
+      # (registering the ten v1 adapters with the harness + signed
+      # attestations from adapter CI) is a follow-on integration; until it
+      # lands, --use-mock-adapters demonstrates the spec is valid and the
+      # orchestration path is exercised on every PR.
+      - name: Run pipeline (mock adapters)
+        run: |
+          aieos-pipeline-runner run \
+            --spec .aieos/ci.spec.yaml \
+            --expected-hash "${{ steps.spec.outputs.sha }}" \
+            --use-mock-adapters \
+            --run-id "run-${{ github.run_id }}-${{ github.run_attempt }}"
